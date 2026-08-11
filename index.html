@@ -41,7 +41,6 @@
             font-weight: 800;
         }
         
-        /* 사용자 고정 알림 배너 */
         .user-banner { 
             background: #1a365d; 
             padding: 12px 15px; 
@@ -65,7 +64,6 @@
             border: 1px solid #63b3ed;
         }
 
-        /* 탭 메뉴 스타일 */
         .tab-menu { 
             display: flex; 
             gap: 6px; 
@@ -92,7 +90,6 @@
             box-shadow: 0 3px 8px rgba(255, 107, 107, 0.4);
         }
 
-        /* 탭 내용 영역 */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
@@ -143,7 +140,6 @@
         }
         button:hover { background-color: var(--primary-hover); }
         
-        /* 알림장 메모 리스트 카드 스타일 */
         .memo-list { 
             background: #232b3b; 
             padding: 14px 16px; 
@@ -156,6 +152,7 @@
         .memo-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 6px;
             font-size: 12px;
             color: var(--text-sub);
@@ -197,7 +194,6 @@
             margin-bottom: 8px;
         }
 
-        /* 댓글 영역 */
         .comment-section {
             background: #1a202c;
             padding: 8px 10px;
@@ -220,11 +216,11 @@
             flex: 1;
             margin-right: 5px;
         }
-        .comment-btns {
+        .comment-btns, .memo-owner-btns {
             display: flex;
             gap: 4px;
         }
-        .comment-btn {
+        .mini-btn {
             background: #4a5568;
             border: none;
             color: white;
@@ -235,9 +231,9 @@
             width: auto;
             margin: 0;
         }
-        .comment-btn:hover { background: #718096; }
-        .comment-btn.delete { background: #9b2c2c; }
-        .comment-btn.delete:hover { background: #c53030; }
+        .mini-btn:hover { background: #718096; }
+        .mini-btn.delete { background: #9b2c2c; }
+        .mini-btn.delete:hover { background: #c53030; }
 
         .comment-input-box {
             display: flex;
@@ -257,7 +253,6 @@
             font-size: 11px;
         }
 
-        /* 평일 달력 스타일 */
         .calendar-box { text-align: center; }
         .calendar-header { 
             display: flex; 
@@ -346,7 +341,6 @@
 <div class="container">
     <h2>🧸 우리 아이 등하원 알리미</h2>
 
-    <!-- 핸드폰별 사용자 고정 배너 -->
     <div class="user-banner">
         <span>📱 현재 사용자: <strong id="displayUser" style="color:#63b3ed;">설정 필요</strong></span>
         <select id="deviceUser" onchange="changeDeviceUser()">
@@ -358,14 +352,12 @@
         </select>
     </div>
 
-    <!-- 탭 메뉴 버튼 -->
     <div class="tab-menu">
         <button class="tab-btn active" onclick="switchTab(0)">등하원 설정하기</button>
         <button class="tab-btn" onclick="switchTab(1)">달력 보기</button>
         <button class="tab-btn" onclick="switchTab(2)">가족 알림장</button>
     </div>
 
-    <!-- 탭 1: 등/하원 설정 -->
     <div class="tab-content active">
         <div class="box">
             <label>📅 날짜 선택</label>
@@ -390,7 +382,6 @@
         </div>
     </div>
 
-    <!-- 탭 2: 평일 달력 현황 -->
     <div class="tab-content">
         <div class="box calendar-box">
             <div class="calendar-header">
@@ -405,13 +396,11 @@
                     </tr>
                 </thead>
                 <tbody id="calendarBody">
-                    <!-- 달력이 동적으로 생성됩니다 -->
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- 탭 3: 가족 알림장 메모 -->
     <div class="tab-content">
         <div class="box">
             <label>📝 실시간 공유 메모</label>
@@ -454,6 +443,7 @@
             localStorage.setItem('my_device_user', selected);
             document.getElementById('displayUser').innerText = selected;
             alert("이 기기의 사용자가 '" + selected + "(으)로' 고정되었습니다!");
+            renderMemos();
         }
     }
 
@@ -520,6 +510,17 @@
             let checkBtnClass = hasChecked ? 'action-btn active' : 'action-btn';
             let checkText = hasChecked ? '✔️ 확인완료' : '☑️ 체크하기';
 
+            // 내가 쓴 메모일 경우 수정/삭제 버튼 표시
+            let memoOwnerBtns = '';
+            if (m.user === currentUser) {
+                memoOwnerBtns = `
+                    <div class="memo-owner-btns">
+                        <button class="mini-btn" onclick="editMemo(${index})">수정</button>
+                        <button class="mini-btn delete" onclick="deleteMemo(${index})">삭제</button>
+                    </div>
+                `;
+            }
+
             let commentsHtml = '';
             if(m.comments && m.comments.length > 0) {
                 m.comments.forEach((c, cIndex) => {
@@ -528,8 +529,8 @@
                     if(isMyComment) {
                         commentBtns = `
                             <div class="comment-btns">
-                                <button class="comment-btn" onclick="editComment(${index}, ${cIndex})">수정</button>
-                                <button class="comment-btn delete" onclick="deleteComment(${index}, ${cIndex})">삭제</button>
+                                <button class="mini-btn" onclick="editComment(${index}, ${cIndex})">수정</button>
+                                <button class="mini-btn delete" onclick="deleteComment(${index}, ${cIndex})">삭제</button>
                             </div>
                         `;
                     }
@@ -546,8 +547,8 @@
             div.className = 'memo-list';
             div.innerHTML = `
                 <div class="memo-header">
-                    <strong>👤 ${m.user}</strong>
-                    <span>${m.time}</span>
+                    <strong>👤 ${m.user} (${m.time})</strong>
+                    ${memoOwnerBtns}
                 </div>
                 <div class="memo-content">${m.text}</div>
                 <div class="memo-actions">
@@ -643,6 +644,24 @@
             alert('메모 저장 중 오류가 발생했습니다.');
             console.log(err);
         });
+    }
+
+    function editMemo(memoIndex) {
+        let memo = memoListCache[memoIndex];
+        let newText = prompt("메모를 수정하세요:", memo.text);
+        if(newText !== null && newText.trim() !== "") {
+            memo.text = newText.trim();
+            renderMemos();
+            // 서버에 반영 필요시 추가 연동 가능
+        }
+    }
+
+    function deleteMemo(memoIndex) {
+        if(confirm("정말 이 메모를 삭제하시겠습니까?")) {
+            memoListCache.splice(memoIndex, 1);
+            renderMemos();
+            // 서버에 반영 필요시 추가 연동 가능
+        }
     }
 
     function toggleLike(index) {
