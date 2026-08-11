@@ -46,11 +46,11 @@
 <body>
 
 <div class="container">
-    <h2>🧸 등하원 알리미</h2>
+    <h2> 우리 아이 등하원 알리미</h2>
 
     <!-- 핸드폰별 사용자 고정 배너 -->
     <div class="user-banner">
-        <span>📱 이 기기의 사용자: <strong id="displayUser">설정 필요</strong></span>
+        <span>📱 현재 사용자: <strong id="displayUser">설정 필요</strong></span>
         <select id="deviceUser" onchange="changeDeviceUser()">
             <option value="">선택하기</option>
             <option value="아빠">아빠</option>
@@ -62,9 +62,9 @@
 
     <!-- 탭 메뉴 버튼 -->
     <div class="tab-menu">
-        <button class="tab-btn active" onclick="switchTab(0)">1. 설정</button>
-        <button class="tab-btn" onclick="switchTab(1)">2. 평일 달력 현황</button>
-        <button class="tab-btn" onclick="switchTab(2)">3. 가족 알림장</button>
+        <button class="tab-btn active" onclick="switchTab(0)">등하원 설정하기</button>
+        <button class="tab-btn" onclick="switchTab(1)">달력 보기</button>
+        <button class="tab-btn" onclick="switchTab(2)">가족 알림장</button>
     </div>
 
     <!-- 탭 1: 등/하원 설정 -->
@@ -73,7 +73,7 @@
             <label>📅 날짜 선택:</label>
             <input type="date" id="selectDate">
 
-            <label>☀️ 등원 담당:</label>
+            <label>☀️ 등원하는 사람은:</label>
             <select id="morningUser">
                 <option value="아빠">아빠</option>
                 <option value="엄마">엄마</option>
@@ -81,14 +81,14 @@
                 <option value="친할머니">친할머니</option>
             </select>
 
-            <label>🌙 하원 담당:</label>
+            <label>🌙 하원하는 사람은:</label>
             <select id="eveningUser">
                 <option value="아빠">아빠</option>
                 <option value="엄마">엄마</option>
                 <option value="외할머니">외할머니</option>
                 <option value="친할머니">친할머니</option>
             </select>
-            <button onclick="saveSchedule()">이 날짜 담당자 저장하기</button>
+            <button onclick="saveSchedule()">저장하기</button>
         </div>
     </div>
 
@@ -117,7 +117,7 @@
     <div class="tab-content">
         <div class="box">
             <label>📝 실시간 공유 메모</label>
-            <textarea id="memoText" rows="3" placeholder="선생님 말씀, 준비물 등을 적어주세요"></textarea>
+            <textarea id="memoText" rows="3" placeholder="약 투여, 준비물 등 특이사항을 적어주세요"></textarea>
             <button onclick="saveMemo()">메모 남기기</button>
             <div id="memoBoard">데이터 불러오는 중...</div>
         </div>
@@ -230,7 +230,7 @@
         })
         .then(res => res.json())
         .then(res => {
-            alert(date + " 자 담당자가 구글 시트에 저장되었습니다!");
+            alert(date + " 정상적으로 저장되었습니다!");
             fetchAllData(); // 데이터 새로고침
         })
         .catch(err => {
@@ -292,7 +292,7 @@
     }
 
     function generateCalendar() {
-        document.getElementById('calendarTitle').innerText = `${currentYear}년 ${currentMonth + 1}월 평일 현황`;
+        document.getElementById('calendarTitle').innerText = `${currentYear}년 ${currentMonth + 1}월`;
 
         let firstDayObj = new Date(currentYear, currentMonth, 1);
         let lastDateObj = new Date(currentYear, currentMonth + 1, 0);
