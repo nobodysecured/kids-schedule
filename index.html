@@ -167,7 +167,6 @@
             margin-bottom: 10px;
         }
         
-        /* 액션 버튼 영역 */
         .memo-actions {
             display: flex;
             gap: 8px;
@@ -192,14 +191,12 @@
         }
         .action-btn:hover { background: #4a5568; }
 
-        /* 참여자 표시 텍스트 */
         .participant-info {
             font-size: 11px;
             color: #a0aec0;
             margin-bottom: 8px;
         }
 
-        /* 댓글 영역 */
         .comment-section {
             background: #1a202c;
             padding: 8px 10px;
@@ -232,7 +229,7 @@
             font-size: 11px;
         }
 
-        /* 평일 달력 스타일 */
+        /* 평일 달력 스타일 (비율 및 균등 정렬 개선) */
         .calendar-box { text-align: center; }
         .calendar-header { 
             display: flex; 
@@ -254,24 +251,26 @@
             border-collapse: separate; 
             border-spacing: 4px; 
         }
-        .calendar-table th, .calendar-table td { 
-            border: 1px solid var(--border-color); 
-            padding: 4px; 
-            font-size: 11px; 
-            height: 76px; 
-            vertical-align: top; 
-            text-align: left; 
-            width: 20%; 
-            border-radius: 6px;
-        }
         .calendar-table th { 
             background: #1a202c; 
             color: var(--text-sub); 
             text-align: center; 
             font-size: 12px; 
-            padding: 8px 0; 
+            padding: 6px 0; /* 요일 칸 높이 슬림하게 조정 */
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
         }
-        .calendar-table td { background: #232b3b; }
+        .calendar-table td { 
+            border: 1px solid var(--border-color); 
+            padding: 4px; 
+            font-size: 11px; 
+            height: 78px; 
+            vertical-align: top; 
+            text-align: left; 
+            width: 20%; 
+            border-radius: 6px;
+            background: #232b3b; 
+        }
         .calendar-table td.today { 
             background: #2a2533; 
             border: 2px solid var(--primary); 
@@ -281,7 +280,7 @@
         .date-num {
             font-weight: bold;
             font-size: 11px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
             color: var(--text-main);
             text-align: center;
             background: #1a202c;
@@ -289,23 +288,28 @@
             padding: 2px 0;
         }
         
-        .schedule-morning {
+        /* 날짜 칸 내부를 Flexbox로 설정하여 등원/하원 공간을 1:1 정확히 균등 배분 */
+        .day-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 20px);
+        }
+        .schedule-morning, .schedule-evening {
+            flex: 1; /* 동일한 비율(1:1)로 공간 나눠 갖기 */
             font-size: 10px; 
-            color: #63b3ed; 
-            margin-top: 2px;
-            padding-bottom: 3px;
-            border-bottom: 1px dashed #4a5568; 
+            display: flex;
+            align-items: center;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            padding-left: 2px;
+        }
+        .schedule-morning {
+            color: #63b3ed; 
+            border-bottom: 1px dashed #4a5568; /* 명확한 점선 구분선 */
         }
         .schedule-evening {
-            font-size: 10px; 
             color: #fc8181; 
-            margin-top: 3px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
     </style>
 </head>
@@ -354,7 +358,7 @@
                 <option value="외할머니">외할머니</option>
                 <option value="친할머니">친할머니</option>
             </select>
-            <button onclick="saveSchedule()">✨ 저장하기</button>
+            <button onclick="saveSchedule()">✨ 담당자 저장하기</button>
         </div>
     </div>
 
@@ -363,7 +367,7 @@
         <div class="box calendar-box">
             <div class="calendar-header">
                 <button onclick="moveMonth(-1)">◀ 이전달</button>
-                <h3 id="calendarTitle" style="margin:0; font-size:15px; color:var(--text-main);">2026년 6월</h3>
+                <h3 id="calendarTitle" style="margin:0; font-size:15px; color:var(--text-main);">2026년 8월</h3>
                 <button onclick="moveMonth(1)">다음달 ▶</button>
             </div>
             <table class="calendar-table">
@@ -609,9 +613,9 @@
         let arr = memoListCache[index].likes;
         let pos = arr.indexOf(user);
         if(pos > -1) {
-            arr.splice(pos, 1); // 이미 눌렀으면 해제
+            arr.splice(pos, 1);
         } else {
-            arr.push(user); // 안 눌렀으면 추가
+            arr.push(user);
         }
         renderMemos();
     }
@@ -717,8 +721,10 @@
 
             cell.innerHTML = `
                 <div class="date-num">${day}일</div>
-                <div class="schedule-morning">등: ${mAssign}</div>
-                <div class="schedule-evening">하: ${eAssign}</div>
+                <div class="day-content">
+                    <div class="schedule-morning">등: ${mAssign}</div>
+                    <div class="schedule-evening">하: ${eAssign}</div>
+                </div>
             `;
             
             row.appendChild(cell);
