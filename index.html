@@ -197,6 +197,7 @@
             margin-bottom: 8px;
         }
 
+        /* 댓글 영역 */
         .comment-section {
             background: #1a202c;
             padding: 8px 10px;
@@ -206,11 +207,38 @@
         }
         .comment-item {
             font-size: 11px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             color: #e2e8f0;
             border-bottom: 1px solid #2d3748;
-            padding-bottom: 3px;
+            padding-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+        .comment-text-area {
+            word-break: break-all;
+            flex: 1;
+            margin-right: 5px;
+        }
+        .comment-btns {
+            display: flex;
+            gap: 4px;
+        }
+        .comment-btn {
+            background: #4a5568;
+            border: none;
+            color: white;
+            font-size: 9px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
+        .comment-btn:hover { background: #718096; }
+        .comment-btn.delete { background: #9b2c2c; }
+        .comment-btn.delete:hover { background: #c53030; }
+
         .comment-input-box {
             display: flex;
             gap: 6px;
@@ -229,7 +257,7 @@
             font-size: 11px;
         }
 
-        /* 평일 달력 스타일 (비율 및 균등 정렬 개선) */
+        /* 평일 달력 스타일 */
         .calendar-box { text-align: center; }
         .calendar-header { 
             display: flex; 
@@ -256,7 +284,7 @@
             color: var(--text-sub); 
             text-align: center; 
             font-size: 12px; 
-            padding: 6px 0; /* 요일 칸 높이 슬림하게 조정 */
+            padding: 6px 0; 
             border: 1px solid var(--border-color);
             border-radius: 6px;
         }
@@ -288,25 +316,25 @@
             padding: 2px 0;
         }
         
-        /* 날짜 칸 내부를 Flexbox로 설정하여 등원/하원 공간을 1:1 정확히 균등 배분 */
         .day-content {
             display: flex;
             flex-direction: column;
             height: calc(100% - 20px);
         }
         .schedule-morning, .schedule-evening {
-            flex: 1; /* 동일한 비율(1:1)로 공간 나눠 갖기 */
-            font-size: 10px; 
+            flex: 1; 
+            font-size: 11px; 
+            font-weight: bold;
             display: flex;
             align-items: center;
+            justify-content: center;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            padding-left: 2px;
         }
         .schedule-morning {
             color: #63b3ed; 
-            border-bottom: 1px dashed #4a5568; /* 명확한 점선 구분선 */
+            border-bottom: 1px dashed #4a5568; 
         }
         .schedule-evening {
             color: #fc8181; 
@@ -358,7 +386,7 @@
                 <option value="외할머니">외할머니</option>
                 <option value="친할머니">친할머니</option>
             </select>
-            <button onclick="saveSchedule()">✨ 저장하기</button>
+            <button onclick="saveSchedule()">✨ 담당자 저장하기</button>
         </div>
     </div>
 
@@ -494,8 +522,23 @@
 
             let commentsHtml = '';
             if(m.comments && m.comments.length > 0) {
-                m.comments.forEach(c => {
-                    commentsHtml += `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`;
+                m.comments.forEach((c, cIndex) => {
+                    let isMyComment = (c.user === currentUser);
+                    let commentBtns = '';
+                    if(isMyComment) {
+                        commentBtns = `
+                            <div class="comment-btns">
+                                <button class="comment-btn" onclick="editComment(${index}, ${cIndex})">수정</button>
+                                <button class="comment-btn delete" onclick="deleteComment(${index}, ${cIndex})">삭제</button>
+                            </div>
+                        `;
+                    }
+                    commentsHtml += `
+                        <div class="comment-item">
+                            <div class="comment-text-area"><strong>${c.user}:</strong> ${c.text}</div>
+                            ${commentBtns}
+                        </div>
+                    `;
                 });
             }
 
@@ -654,6 +697,22 @@
         renderMemos();
     }
 
+    function editComment(memoIndex, commentIndex) {
+        let comment = memoListCache[memoIndex].comments[commentIndex];
+        let newText = prompt("댓글을 수정하세요:", comment.text);
+        if(newText !== null && newText.trim() !== "") {
+            comment.text = newText.trim();
+            renderMemos();
+        }
+    }
+
+    function deleteComment(memoIndex, commentIndex) {
+        if(confirm("정말 이 댓글을 삭제하시겠습니까?")) {
+            memoListCache[memoIndex].comments.splice(commentIndex, 1);
+            renderMemos();
+        }
+    }
+
     function moveMonth(step) {
         currentMonth += step;
         if(currentMonth > 11) {
@@ -712,18 +771,14 @@
                 cell.classList.add('today');
             }
 
-            let mAssign = '-';
-            let eAssign = '-';
-            if (serverSchedule[dateStr]) {
-                mAssign = serverSchedule[dateStr].morning || '-';
-                eAssign = serverSchedule[dateStr].evening || '-';
-            }
+            let mAssign = serverSchedule[dateStr] ? (serverSchedule[dateStr].morning || '-') : '-';
+            let eAssign = serverSchedule[dateStr] ? (serverSchedule[dateStr].evening || '-') : '-';
 
             cell.innerHTML = `
                 <div class="date-num">${day}일</div>
                 <div class="day-content">
-                    <div class="schedule-morning">등: ${mAssign}</div>
-                    <div class="schedule-evening">하: ${eAssign}</div>
+                    <div class="schedule-morning">${mAssign}</div>
+                    <div class="schedule-evening">${eAssign}</div>
                 </div>
             `;
             
