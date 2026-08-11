@@ -5,73 +5,156 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>어린이집 등하원 알리미</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #ff6b6b; }
+        h2 { text-align: center; color: #ff6b6b; margin-top: 0; }
+        
+        /* 탭 버튼 스타일 */
+        .tab-menu { display: flex; justify-content: space-between; margin-bottom: 20px; background: #eee; padding: 4px; border-radius: 8px; }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; }
+        .tab-btn.active { background: #ff6b6b; color: white; }
+
+        /* 탭 내용 영역 */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         .box { background: #fdf0ed; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        select, textarea, button { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
+        select, textarea, input, button { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         button { background-color: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; }
         button:hover { background-color: #fa5252; }
+        
         .memo-list { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 14px; border-left: 4px solid #ff6b6b; }
+        
+        /* 달력 스타일 */
+        .calendar-box { text-align: center; }
+        .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 8px; font-size: 13px; height: 50px; vertical-align: top; text-align: left; }
+        .calendar-table th { background: #f8f9fa; text-align: center; }
+        .calendar-table td { background: #fff; }
+        .calendar-table td.today { background: #fff5f5; font-weight: bold; border: 2px solid #ff6b6b; }
+        .schedule-text { font-size: 10px; color: #555; margin-top: 2px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🧸 우리 아이 등하원 알리미</h2>
+    <h2>🧸 등하원 알리미</h2>
 
-    <!-- 1 & 4번 기능: 사용자 선택 및 담당자 지정 -->
-    <div class="box">
-        <label>👤 접속한 사람 선택:</label>
-        <select id="currentUser">
-            <option value="아빠">아빠</option>
-            <option value="엄마">엄마</option>
-            <option value="외할머니">외할머니</option>
-            <option value="친할머니">친할머니</option>
-        </select>
-
-        <label>☀️ 오늘 등원 담당:</label>
-        <select id="morningUser">
-            <option value="아빠">아빠</option>
-            <option value="엄마">엄마</option>
-            <option value="외할머니">외할머니</option>
-            <option value="친할머니">친할머니</option>
-        </select>
-
-        <label>🌙 오늘 하원 담당:</label>
-        <select id="eveningUser">
-            <option value="아빠">아빠</option>
-            <option value="엄마">엄마</option>
-            <option value="외할머니">외할머니</option>
-            <option value="친할머니">친할머니</option>
-        </select>
-        <button onclick="saveSchedule()">담당자 저장하기</button>
+    <!-- 탭 메뉴 버튼 -->
+    <div class="tab-menu">
+        <button class="tab-btn active" onclick="switchTab(0)">1. 설정</button>
+        <button class="tab-btn" onclick="switchTab(1)">2. 달력 현황</button>
+        <button class="tab-btn" onclick="switchTab(2)">3. 가족 알림장</button>
     </div>
 
-    <!-- 3번 기능: 특이사항 메모 -->
-    <div class="box">
-        <label>📝 실시간 공유 메모 (알림장)</label>
-        <textarea id="memoText" rows="3" placeholder="선생님 말씀, 준비물 등을 적어주세요"></textarea>
-        <button onclick="saveMemo()">메모 남기기</button>
-        <div id="memoBoard"></div>
+    <!-- 탭 1: 등/하원 설정 -->
+    <div class="tab-content active">
+        <div class="box">
+            <label>👤 접속한 사람 선택:</label>
+            <select id="currentUser">
+                <option value="아빠">아빠</option>
+                <option value="엄마">엄마</option>
+                <option value="외할머니">외할머니</option>
+                <option value="친할머니">친할머니</option>
+            </select>
+
+            <label>📅 날짜 선택:</label>
+            <input type="date" id="selectDate">
+
+            <label>☀️ 등원 담당:</label>
+            <select id="morningUser">
+                <option value="아빠">아빠</option>
+                <option value="엄마">엄마</option>
+                <option value="외할머니">외할머니</option>
+                <option value="친할머니">친할머니</option>
+            </select>
+
+            <label>🌙 하원 담당:</label>
+            <select id="eveningUser">
+                <option value="아빠">아빠</option>
+                <option value="엄마">엄마</option>
+                <option value="외할머니">외할머니</option>
+                <option value="친할머니">친할머니</option>
+            </select>
+            <button onclick="saveSchedule()">이 날짜 담당자 저장하기</button>
+        </div>
+    </div>
+
+    <!-- 탭 2: 달력 현황 -->
+    <div class="tab-content">
+        <div class="box calendar-box">
+            <h3 id="calendarTitle" style="margin:5px 0 15px 0; font-size:16px;">2026년 6월</h3>
+            <table class="calendar-table">
+                <thead>
+                    <tr>
+                        <th style="color:red;">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th style="color:blue;">토</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody">
+                    <!-- 자바스크립트로 달력이 자동으로 채워집니다 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 탭 3: 가족 알림장 메모 -->
+    <div class="tab-content">
+        <div class="box">
+            <label>📝 실시간 공유 메모</label>
+            <textarea id="memoText" rows="3" placeholder="선생님 말씀, 준비물 등을 적어주세요"></textarea>
+            <button onclick="saveMemo()">메모 남기기</button>
+            <div id="memoBoard"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // 간단한 데이터 저장 (새로고침해도 유지되도록 브라우저 저장소 활용)
+    // 오늘 날짜를 기본으로 세팅
+    document.getElementById('selectDate').valueAsDate = new Date();
+
     window.onload = function() {
-        if(localStorage.getItem('morning')) document.getElementById('morningUser').value = localStorage.getItem('morning');
-        if(localStorage.getItem('evening')) document.getElementById('eveningUser').value = localStorage.getItem('evening');
+        loadScheduleForDate();
         loadMemos();
+        generateCalendar();
+    }
+
+    // 날짜 바꿀 때 해당 날짜 담당자 불러오기
+    document.getElementById('selectDate').addEventListener('change', loadScheduleForDate);
+
+    function switchTab(index) {
+        let buttons = document.querySelectorAll('.tab-btn');
+        let contents = document.querySelectorAll('.tab-content');
+        
+        buttons.forEach((btn, idx) => {
+            if(idx === index) {
+                btn.classList.add('active');
+                contents[idx].classList.add('active');
+            } else {
+                btn.classList.remove('active');
+                contents[idx].classList.remove('active');
+            }
+        });
+        if(index === 1) generateCalendar(); // 달력 탭 누를 때 갱신
     }
 
     function saveSchedule() {
+        let date = document.getElementById('selectDate').value;
         let m = document.getElementById('morningUser').value;
         let e = document.getElementById('eveningUser').value;
-        localStorage.setItem('morning', m);
-        localStorage.setItem('evening', e);
-        alert("오늘의 담당자가 저장되었습니다!");
+        
+        localStorage.setItem('morning_' + date, m);
+        localStorage.setItem('evening_' + date, e);
+        alert(date + " 자 담당자가 저장되었습니다!");
+        generateCalendar();
+    }
+
+    function loadScheduleForDate() {
+        let date = document.getElementById('selectDate').value;
+        let m = localStorage.getItem('morning_' + date);
+        let e = localStorage.getItem('evening_' + date);
+        if(m) document.getElementById('morningUser').value = m;
+        if(e) document.getElementById('eveningUser').value = e;
     }
 
     function saveMemo() {
@@ -80,7 +163,7 @@
         if(!text.trim()) return alert("내용을 입력해주세요!");
 
         let memos = JSON.parse(localStorage.getItem('memos') || '[]');
-        memos.unshift({user: user, text: text, time: new Date().toLocaleTimeString()});
+        memos.unshift({user: user, text: text, time: new Date().toLocaleString()});
         localStorage.setItem('memos', JSON.stringify(memos));
 
         document.getElementById('memoText').value = '';
@@ -97,6 +180,73 @@
             div.innerHTML = `<strong>${m.user}</strong> (${m.time})<br>${m.text}`;
             board.appendChild(div);
         });
+    }
+
+    // 간단한 달력 생성 함수
+    function generateCalendar() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = now.getMonth();
+        
+        document.getElementById('calendarTitle').innerText = `${year}년 ${month + 1}월 등하원 현황`;
+
+        let firstDay = new Date(year, month, 1).getDay();
+        let lastDate = new Date(year, month + 1, 0).getDate();
+
+        let tbody = document.getElementById('calendarBody');
+        tbody.innerHTML = '';
+
+        let row = document.createElement('tr');
+        let dayCount = 1;
+
+        // 첫 주 빈칸 채우기
+        for(let i = 0; i < firstDay; i++) {
+            let cell = document.createElement('td');
+            row.appendChild(cell);
+        }
+
+        for(let i = firstDay; i < 7; i++) {
+            if(dayCount <= lastDate) {
+                row.appendChild(createDayCell(year, month, dayCount));
+                dayCount++;
+            }
+        }
+        tbody.appendChild(row);
+
+        // 나머지 주 채우기
+        while(dayCount <= lastDate) {
+            row = document.createElement('tr');
+            for(let i = 0; i < 7; i++) {
+                if(dayCount <= lastDate) {
+                    row.appendChild(createDayCell(year, month, dayCount));
+                    dayCount++;
+                } else {
+                    let cell = document.createElement('td');
+                    row.appendChild(cell);
+                }
+            }
+            tbody.appendChild(row);
+        }
+    }
+
+    function createDayCell(year, month, day) {
+        let cell = document.createElement('td');
+        let mm = String(month + 1).padStart(2, '0');
+        let dd = String(day).padStart(2, '0');
+        let dateStr = `${year}-${mm}-${dd}`;
+
+        let todayStr = new Date().toISOString().split('T')[0];
+        if(dateStr === todayStr) {
+            cell.classList.add('today');
+        }
+
+        let mAssign = localStorage.getItem('morning_' + dateStr) || '-';
+        let eAssign = localStorage.getItem('evening_' + dateStr) || '-';
+
+        cell.innerHTML = `<div style="font-weight:bold; font-size:12px;">${day}</div>` +
+                         `<div class="schedule-text">등:${mAssign}</div>` +
+                         `<div class="schedule-text">하:${eAssign}</div>`;
+        return cell;
     }
 </script>
 
