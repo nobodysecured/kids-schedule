@@ -62,6 +62,7 @@
             background: #fff;
             border-radius: 6px;
             border: 1px solid #63b3ed;
+            text-align: left;
         }
 
         .tab-menu { 
@@ -99,7 +100,7 @@
             border-radius: 12px; 
             margin-bottom: 15px; 
             border: 1px solid var(--border-color);
-            overflow: hidden; /* 요소가 박스를 벗어나지 않도록 강제 제어 */
+            overflow: hidden; 
         }
 
         label { 
@@ -110,18 +111,20 @@
             color: var(--text-main); 
         }
 
-        select, textarea, input, button { 
+        /* 입력창, 셀렉트, 텍스트박스 좌우 정렬 및 여백 완벽 통일 */
+        select, textarea, input[type="date"], input[type="text"] { 
             width: 100%; 
-            padding: 12px; 
+            padding: 12px 14px; 
             margin-top: 4px; 
             margin-bottom: 14px; 
             border: 1px solid var(--border-color); 
             border-radius: 8px; 
-            box-sizing: border-box !important; /* 패딩이 박스 크기를 밀어내지 않도록 고정 */
+            box-sizing: border-box !important; 
             font-size: 14px;
             background: #1a202c;
             color: var(--text-main);
             outline: none;
+            text-align: left; /* 좌측 정렬 고정 */
         }
         
         select:focus, textarea:focus, input:focus {
@@ -130,14 +133,21 @@
         }
 
         button { 
+            width: 100%;
+            padding: 12px;
+            margin-top: 4px;
+            margin-bottom: 14px;
             background-color: var(--primary); 
             color: white; 
             border: none; 
+            border-radius: 8px;
+            box-sizing: border-box !important;
             font-weight: bold; 
+            font-size: 14px;
             cursor: pointer; 
             transition: background 0.2s;
-            margin-bottom: 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-align: center;
         }
         button:hover { background-color: var(--primary-hover); }
         
@@ -244,13 +254,13 @@
         }
         .comment-input-box input {
             margin: 0;
-            padding: 6px 8px;
+            padding: 8px 10px;
             font-size: 11px;
         }
         .comment-input-box button {
             width: auto;
             margin: 0;
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 11px;
         }
 
@@ -379,7 +389,7 @@
                 <option value="외할머니">외할머니</option>
                 <option value="친할머니">친할머니</option>
             </select>
-            <button onclick="saveSchedule()">✨ 저장하기</button>
+            <button onclick="saveSchedule()">✨ 담당자 저장하기</button>
         </div>
     </div>
 
