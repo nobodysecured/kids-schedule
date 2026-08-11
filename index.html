@@ -143,7 +143,7 @@
         }
         button:hover { background-color: var(--primary-hover); }
         
-        /* 알림장 메모 리스트 카드 스타일 (좋아요, 체크, 댓글 포함) */
+        /* 알림장 메모 리스트 카드 스타일 */
         .memo-list { 
             background: #232b3b; 
             padding: 14px 16px; 
@@ -152,11 +152,6 @@
             font-size: 13px; 
             border-left: 4px solid var(--primary);
             border: 1px solid var(--border-color);
-        }
-        .memo-list.checked {
-            opacity: 0.6;
-            background: #1e2430;
-            border-left: 4px solid #4a5568;
         }
         .memo-header {
             display: flex;
@@ -171,24 +166,38 @@
             word-break: break-all;
             margin-bottom: 10px;
         }
-        /* 액션 버튼 영역 (좋아요, 체크) */
+        
+        /* 액션 버튼 영역 */
         .memo-actions {
             display: flex;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
         }
         .action-btn {
             background: #1a202c;
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 5px 10px;
+            padding: 6px 12px;
             font-size: 11px;
             border-radius: 6px;
             width: auto;
             margin: 0;
             cursor: pointer;
         }
+        .action-btn.active {
+            background: #3182ce;
+            border-color: #63b3ed;
+            color: white;
+        }
         .action-btn:hover { background: #4a5568; }
+
+        /* 참여자 표시 텍스트 */
+        .participant-info {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
 
         /* 댓글 영역 */
         .comment-section {
@@ -202,6 +211,8 @@
             font-size: 11px;
             margin-bottom: 4px;
             color: #e2e8f0;
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 3px;
         }
         .comment-input-box {
             display: flex;
@@ -221,7 +232,7 @@
             font-size: 11px;
         }
 
-        /* 평일 달력 스타일 (균등 비율 및 점선 분할) */
+        /* 평일 달력 스타일 */
         .calendar-box { text-align: center; }
         .calendar-header { 
             display: flex; 
@@ -247,7 +258,7 @@
             border: 1px solid var(--border-color); 
             padding: 4px; 
             font-size: 11px; 
-            height: 76px; /* 전체 높이 최적화 */
+            height: 76px; 
             vertical-align: top; 
             text-align: left; 
             width: 20%; 
@@ -278,7 +289,6 @@
             padding: 2px 0;
         }
         
-        /* 등원/하원 칸 균등 배분을 위한 스타일 */
         .schedule-morning {
             font-size: 10px; 
             color: #63b3ed; 
@@ -465,11 +475,19 @@
             return;
         }
         
+        let currentUser = localStorage.getItem('my_device_user') || '';
+
         memoListCache.forEach((m, index) => {
-            let likes = m.likes || 0;
-            let isChecked = m.checked ? 'checked' : '';
-            let checkText = m.checked ? '✔️ 확인완료' : '☑️ 체크하기';
-            
+            let likesArr = m.likes || [];
+            let likeCount = likesArr.length;
+            let hasLiked = likesArr.includes(currentUser);
+            let likeBtnClass = hasLiked ? 'action-btn active' : 'action-btn';
+
+            let checksArr = m.checks || [];
+            let hasChecked = checksArr.includes(currentUser);
+            let checkBtnClass = hasChecked ? 'action-btn active' : 'action-btn';
+            let checkText = hasChecked ? '✔️ 확인완료' : '☑️ 체크하기';
+
             let commentsHtml = '';
             if(m.comments && m.comments.length > 0) {
                 m.comments.forEach(c => {
@@ -478,7 +496,7 @@
             }
 
             let div = document.createElement('div');
-            div.className = `memo-list ${isChecked}`;
+            div.className = 'memo-list';
             div.innerHTML = `
                 <div class="memo-header">
                     <strong>👤 ${m.user}</strong>
@@ -486,8 +504,12 @@
                 </div>
                 <div class="memo-content">${m.text}</div>
                 <div class="memo-actions">
-                    <button class="action-btn" onclick="toggleLike(${index})">👍 좋아요 (${likes})</button>
-                    <button class="action-btn" onclick="toggleCheck(${index})">${checkText}</button>
+                    <button class="${likeBtnClass}" onclick="toggleLike(${index})">👍 좋아요 (${likeCount})</button>
+                    <button class="${checkBtnClass}" onclick="toggleCheck(${index})">${checkText}</button>
+                </div>
+                <div class="participant-info">
+                    <div>👍 좋아요 한 사람: ${likesAuthorText(likesArr)}</div>
+                    <div>☑️ 체크한 사람: ${likesAuthorText(checksArr)}</div>
                 </div>
                 <div class="comment-section">
                     <div id="commentList_${index}">${commentsHtml}</div>
@@ -499,6 +521,11 @@
             `;
             board.appendChild(div);
         });
+    }
+
+    function likesAuthorText(arr) {
+        if(!arr || arr.length === 0) return '없음';
+        return arr.join(', ');
     }
 
     function saveSchedule() {
@@ -551,8 +578,8 @@
             user: user,
             text: text,
             time: new Date().toLocaleString(),
-            likes: 0,
-            checked: false,
+            likes: [],
+            checks: [],
             comments: []
         };
 
@@ -572,13 +599,38 @@
     }
 
     function toggleLike(index) {
-        memoListCache[index].likes = (memoListCache[index].likes || 0) + 1;
+        let user = localStorage.getItem('my_device_user');
+        if(!user) return alert("상단에서 먼저 본인의 사용자(아빠/엄마 등)를 선택해주세요!");
+
+        if(!memoListCache[index].likes) {
+            memoListCache[index].likes = [];
+        }
+
+        let arr = memoListCache[index].likes;
+        let pos = arr.indexOf(user);
+        if(pos > -1) {
+            arr.splice(pos, 1); // 이미 눌렀으면 해제
+        } else {
+            arr.push(user); // 안 눌렀으면 추가
+        }
         renderMemos();
-        // 서버 연동 시 추가 저장 로직 구현 가능
     }
 
     function toggleCheck(index) {
-        memoListCache[index].checked = !memoListCache[index].checked;
+        let user = localStorage.getItem('my_device_user');
+        if(!user) return alert("상단에서 먼저 본인의 사용자(아빠/엄마 등)를 선택해주세요!");
+
+        if(!memoListCache[index].checks) {
+            memoListCache[index].checks = [];
+        }
+
+        let arr = memoListCache[index].checks;
+        let pos = arr.indexOf(user);
+        if(pos > -1) {
+            arr.splice(pos, 1);
+        } else {
+            arr.push(user);
+        }
         renderMemos();
     }
 
