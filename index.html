@@ -489,6 +489,25 @@
             .catch(err => console.log('메모 로딩 실패', err));
     }
 
+    function syncMemosToServer() {
+        let payload = {
+            action: 'saveMemosAll',
+            memos: memoListCache
+        };
+
+        fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            fetchAllData();
+        })
+        .catch(err => {
+            console.log('서버 동기화 오류', err);
+        });
+    }
+
     function renderMemos() {
         let board = document.getElementById('memoBoard');
         board.innerHTML = '';
@@ -510,7 +529,6 @@
             let checkBtnClass = hasChecked ? 'action-btn active' : 'action-btn';
             let checkText = hasChecked ? '✔️ 확인완료' : '☑️ 체크하기';
 
-            // 내가 쓴 메모일 경우 수정/삭제 버튼 표시
             let memoOwnerBtns = '';
             if (m.user === currentUser) {
                 memoOwnerBtns = `
@@ -621,8 +639,7 @@
         let text = document.getElementById('memoText').value;
         if(!text.trim()) return alert("내용을 입력해주세요!");
 
-        let payload = {
-            action: 'saveMemo',
+        let newMemo = {
             user: user,
             text: text,
             time: new Date().toLocaleString(),
@@ -631,19 +648,9 @@
             comments: []
         };
 
-        fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(res => {
-            document.getElementById('memoText').value = '';
-            fetchAllData();
-        })
-        .catch(err => {
-            alert('메모 저장 중 오류가 발생했습니다.');
-            console.log(err);
-        });
+        memoListCache.unshift(newMemo);
+        document.getElementById('memoText').value = '';
+        syncMemosToServer();
     }
 
     function editMemo(memoIndex) {
@@ -651,16 +658,14 @@
         let newText = prompt("메모를 수정하세요:", memo.text);
         if(newText !== null && newText.trim() !== "") {
             memo.text = newText.trim();
-            renderMemos();
-            // 서버에 반영 필요시 추가 연동 가능
+            syncMemosToServer();
         }
     }
 
     function deleteMemo(memoIndex) {
         if(confirm("정말 이 메모를 삭제하시겠습니까?")) {
             memoListCache.splice(memoIndex, 1);
-            renderMemos();
-            // 서버에 반영 필요시 추가 연동 가능
+            syncMemosToServer();
         }
     }
 
@@ -679,7 +684,7 @@
         } else {
             arr.push(user);
         }
-        renderMemos();
+        syncMemosToServer();
     }
 
     function toggleCheck(index) {
@@ -697,7 +702,7 @@
         } else {
             arr.push(user);
         }
-        renderMemos();
+        syncMemosToServer();
     }
 
     function addComment(index) {
@@ -713,7 +718,7 @@
         }
         memoListCache[index].comments.push({ user: user, text: text });
         input.value = '';
-        renderMemos();
+        syncMemosToServer();
     }
 
     function editComment(memoIndex, commentIndex) {
@@ -721,14 +726,14 @@
         let newText = prompt("댓글을 수정하세요:", comment.text);
         if(newText !== null && newText.trim() !== "") {
             comment.text = newText.trim();
-            renderMemos();
+            syncMemosToServer();
         }
     }
 
     function deleteComment(memoIndex, commentIndex) {
         if(confirm("정말 이 댓글을 삭제하시겠습니까?")) {
             memoListCache[memoIndex].comments.splice(commentIndex, 1);
-            renderMemos();
+            syncMemosToServer();
         }
     }
 
