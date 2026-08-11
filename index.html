@@ -99,6 +99,7 @@
             border-radius: 12px; 
             margin-bottom: 15px; 
             border: 1px solid var(--border-color);
+            overflow: hidden; /* 요소가 박스를 벗어나지 않도록 강제 제어 */
         }
 
         label { 
@@ -116,7 +117,7 @@
             margin-bottom: 14px; 
             border: 1px solid var(--border-color); 
             border-radius: 8px; 
-            box-sizing: border-box; 
+            box-sizing: border-box !important; /* 패딩이 박스 크기를 밀어내지 않도록 고정 */
             font-size: 14px;
             background: #1a202c;
             color: var(--text-main);
