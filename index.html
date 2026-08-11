@@ -8,11 +8,11 @@
         :root {
             --primary: #ff6b6b;
             --primary-hover: #fa5252;
-            --bg-color: #1a202c;         /* 어두운 배경 */
-            --card-bg: #2d3748;          /* 카드/박스 배경 */
-            --text-main: #f7fafc;        /* 메인 텍스트 (밝은 색) */
-            --text-sub: #a0aec0;         /* 서브 텍스트 */
-            --border-color: #4a5568;     /* 테두리 색상 */
+            --bg-color: #1a202c;         
+            --card-bg: #2d3748;          
+            --text-main: #f7fafc;        
+            --text-sub: #a0aec0;         
+            --border-color: #4a5568;     
         }
 
         body { 
@@ -143,17 +143,20 @@
         }
         button:hover { background-color: var(--primary-hover); }
         
-        /* 알림장 메모 리스트 카드 스타일 */
+        /* 알림장 메모 리스트 카드 스타일 (좋아요, 체크, 댓글 포함) */
         .memo-list { 
             background: #232b3b; 
             padding: 14px 16px; 
             border-radius: 10px; 
-            margin-top: 10px; 
+            margin-top: 12px; 
             font-size: 13px; 
             border-left: 4px solid var(--primary);
-            border-top: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            border: 1px solid var(--border-color);
+        }
+        .memo-list.checked {
+            opacity: 0.6;
+            background: #1e2430;
+            border-left: 4px solid #4a5568;
         }
         .memo-header {
             display: flex;
@@ -166,9 +169,59 @@
             color: var(--text-main);
             line-height: 1.4;
             word-break: break-all;
+            margin-bottom: 10px;
+        }
+        /* 액션 버튼 영역 (좋아요, 체크) */
+        .memo-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .action-btn {
+            background: #1a202c;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+        .action-btn:hover { background: #4a5568; }
+
+        /* 댓글 영역 */
+        .comment-section {
+            background: #1a202c;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .comment-item {
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: #e2e8f0;
+        }
+        .comment-input-box {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            margin-bottom: 0;
+        }
+        .comment-input-box input {
+            margin: 0;
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+        .comment-input-box button {
+            width: auto;
+            margin: 0;
+            padding: 6px 12px;
+            font-size: 11px;
         }
 
-        /* 평일 달력 스타일 (점선 분할 적용) */
+        /* 평일 달력 스타일 (균등 비율 및 점선 분할) */
         .calendar-box { text-align: center; }
         .calendar-header { 
             display: flex; 
@@ -192,9 +245,9 @@
         }
         .calendar-table th, .calendar-table td { 
             border: 1px solid var(--border-color); 
-            padding: 5px; 
+            padding: 4px; 
             font-size: 11px; 
-            height: 72px; 
+            height: 76px; /* 전체 높이 최적화 */
             vertical-align: top; 
             text-align: left; 
             width: 20%; 
@@ -217,21 +270,21 @@
         .date-num {
             font-weight: bold;
             font-size: 11px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: var(--text-main);
             text-align: center;
             background: #1a202c;
             border-radius: 4px;
-            padding: 1px 0;
+            padding: 2px 0;
         }
         
-        /* 등원/하원 명확한 구분선 (점선) 스타일 */
+        /* 등원/하원 칸 균등 배분을 위한 스타일 */
         .schedule-morning {
             font-size: 10px; 
             color: #63b3ed; 
             margin-top: 2px;
-            padding-bottom: 2px;
-            border-bottom: 1px dashed #4a5568; /* 점선 구분선 */
+            padding-bottom: 3px;
+            border-bottom: 1px dashed #4a5568; 
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -239,7 +292,7 @@
         .schedule-evening {
             font-size: 10px; 
             color: #fc8181; 
-            margin-top: 2px;
+            margin-top: 3px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -336,6 +389,7 @@
     let currentYear = todayObj.getFullYear();
     let currentMonth = todayObj.getMonth();
     let serverSchedule = {};
+    let memoListCache = [];
 
     document.getElementById('selectDate').valueAsDate = todayObj;
 
@@ -397,26 +451,54 @@
         fetch(API_URL + '?action=getMemos')
             .then(res => res.json())
             .then(data => {
-                let board = document.getElementById('memoBoard');
-                board.innerHTML = '';
-                if(data.length === 0) {
-                    board.innerHTML = '<div style="font-size:12px; color:var(--text-sub); text-align:center; padding:15px;">등록된 메모가 없습니다.</div>';
-                    return;
-                }
-                data.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = 'memo-list';
-                    div.innerHTML = `
-                        <div class="memo-header">
-                            <strong>👤 ${m.user}</strong>
-                            <span>${m.time}</span>
-                        </div>
-                        <div class="memo-content">${m.text}</div>
-                    `;
-                    board.appendChild(div);
-                });
+                memoListCache = data;
+                renderMemos();
             })
             .catch(err => console.log('메모 로딩 실패', err));
+    }
+
+    function renderMemos() {
+        let board = document.getElementById('memoBoard');
+        board.innerHTML = '';
+        if(memoListCache.length === 0) {
+            board.innerHTML = '<div style="font-size:12px; color:var(--text-sub); text-align:center; padding:15px;">등록된 메모가 없습니다.</div>';
+            return;
+        }
+        
+        memoListCache.forEach((m, index) => {
+            let likes = m.likes || 0;
+            let isChecked = m.checked ? 'checked' : '';
+            let checkText = m.checked ? '✔️ 확인완료' : '☑️ 체크하기';
+            
+            let commentsHtml = '';
+            if(m.comments && m.comments.length > 0) {
+                m.comments.forEach(c => {
+                    commentsHtml += `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`;
+                });
+            }
+
+            let div = document.createElement('div');
+            div.className = `memo-list ${isChecked}`;
+            div.innerHTML = `
+                <div class="memo-header">
+                    <strong>👤 ${m.user}</strong>
+                    <span>${m.time}</span>
+                </div>
+                <div class="memo-content">${m.text}</div>
+                <div class="memo-actions">
+                    <button class="action-btn" onclick="toggleLike(${index})">👍 좋아요 (${likes})</button>
+                    <button class="action-btn" onclick="toggleCheck(${index})">${checkText}</button>
+                </div>
+                <div class="comment-section">
+                    <div id="commentList_${index}">${commentsHtml}</div>
+                    <div class="comment-input-box">
+                        <input type="text" id="commentInput_${index}" placeholder="댓글을 입력하세요">
+                        <button onclick="addComment(${index})">등록</button>
+                    </div>
+                </div>
+            `;
+            board.appendChild(div);
+        });
     }
 
     function saveSchedule() {
@@ -468,7 +550,10 @@
             action: 'saveMemo',
             user: user,
             text: text,
-            time: new Date().toLocaleString()
+            time: new Date().toLocaleString(),
+            likes: 0,
+            checked: false,
+            comments: []
         };
 
         fetch(API_URL, {
@@ -484,6 +569,33 @@
             alert('메모 저장 중 오류가 발생했습니다.');
             console.log(err);
         });
+    }
+
+    function toggleLike(index) {
+        memoListCache[index].likes = (memoListCache[index].likes || 0) + 1;
+        renderMemos();
+        // 서버 연동 시 추가 저장 로직 구현 가능
+    }
+
+    function toggleCheck(index) {
+        memoListCache[index].checked = !memoListCache[index].checked;
+        renderMemos();
+    }
+
+    function addComment(index) {
+        let user = localStorage.getItem('my_device_user');
+        if(!user) return alert("상단에서 먼저 본인의 사용자(아빠/엄마 등)를 선택해주세요!");
+
+        let input = document.getElementById(`commentInput_${index}`);
+        let text = input.value;
+        if(!text.trim()) return alert("댓글 내용을 입력해주세요!");
+
+        if(!memoListCache[index].comments) {
+            memoListCache[index].comments = [];
+        }
+        memoListCache[index].comments.push({ user: user, text: text });
+        input.value = '';
+        renderMemos();
     }
 
     function moveMonth(step) {
@@ -551,7 +663,6 @@
                 eAssign = serverSchedule[dateStr].evening || '-';
             }
 
-            // 등원과 하원을 점선(border-bottom)으로 명확히 구분
             cell.innerHTML = `
                 <div class="date-num">${day}일</div>
                 <div class="schedule-morning">등: ${mAssign}</div>
